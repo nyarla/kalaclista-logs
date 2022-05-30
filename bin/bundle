@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+cd "$(dirname "${0}")/../"
+
+source .env
+
+target() {
+  find rt -type f -name '*.gz' \
+    | cut -d. -f2 \
+    | sed 's/-[0-9][0-9]$//' \
+    | sort -u \
+    | head --lines="-1"
+}
+
+today() {
+  find rt -type f -name '*.gz' \
+    | cut -d. -f2 \
+    | sed 's/-[0-9][0-9]$//' \
+    | sort -u \
+    | tail -n1
+}
+
+main() {
+  test -d logs || mkdir -p logs
+
+  for day in $(target); do
+    if test ! -z "$(find rt -type f -name "*.gz" | grep $day)"; then
+      zcat rt/*${day}*.gz | gzip -c >logs/${day}.gz
+      rm -rf rt/*${day}*.gz
+    fi
+  done
+
+  aws s3 sync logs/ s3://kalaclista-logs/archives/
+  aws s3 rm s3://kalaclista-logs/logs/ --recursive --exclude="*$(today)*.gz"
+}
+
+main $@

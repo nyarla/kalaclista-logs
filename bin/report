@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+cd "$(dirname "${0}")/../"
+
+attack='php|wp-content|wp-admin|.env|.well-known|admin|uploads|files'
+assets='(webmanifest|svg)\t|images'
+feeds='(index.xml|atom.xml|jsonfeed.json)\t'
+entries='(posts|echos|notes|nyarla|policies|licenses)'
+
+logs() {
+  zcat {logs,rt}/*.gz
+}
+
+report() {
+  local fn=$1
+
+  test -d "$(dirname "dist/${fn}")" || mkdir -p "$(dirname "dist/${fn}")"
+  cat - | goaccess -p goaccess.conf -o dist/$fn
+}
+
+main() {
+  test ! -e dist || rm -rf dist
+
+  logs | grep -vP $attack | grep -vP $assets  | grep -vP $feeds   | report index.html
+  logs | grep -vP $attack | grep -vP $assets  | grep -P  $feeds   | report feeds/index.html
+  logs | grep -vP $assets | grep -vP $feeds   | grep -vP $entries | report attack/index.html
+}
+
+main $@;
