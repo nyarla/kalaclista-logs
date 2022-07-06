@@ -3,7 +3,7 @@
 pull:
 	@bin/pull
 
-bundle:
+bundle: pull
 	@bin/bundle
 
 report: 

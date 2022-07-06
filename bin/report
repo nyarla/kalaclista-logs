@@ -4,10 +4,12 @@ set -euo pipefail
 
 cd "$(dirname "${0}")/../"
 
-attack='php|wp-content|wp-admin|.env|.well-known|admin|uploads|files'
-assets='(webmanifest|svg)\t|images'
-feeds='(index.xml|atom.xml|jsonfeed.json)\t'
-entries='(posts|echos|notes|nyarla|policies|licenses)'
+prefix='cloudfront.net\t'
+
+assets='/(assets|images|[^/]+.(?:svg|webmanifest)\t)'  
+entries='/(posts|echos|notes|nyarla|policies|licenses)/'
+feeds='/(?:(posts|echos|notes)/)?(index.xml|atom.xml|jsonfeed.json)'
+
 
 logs() {
   zcat {logs,rt}/*.gz
@@ -23,9 +25,12 @@ report() {
 main() {
   test ! -e dist || rm -rf dist
 
-  logs | grep -vP $attack | grep -vP $assets  | grep -vP $feeds   | report index.html
-  logs | grep -vP $attack | grep -vP $assets  | grep -P  $feeds   | report feeds/index.html
-  logs | grep -vP $assets | grep -vP $feeds   | grep -vP $entries | report attack/index.html
+  logs | grep -P $prefix$entries  | grep -vP $prefix$feeds | report index.html
+
+  logs | grep -P $prefix$feeds    | report feeds/index.html
+  logs | grep -P $prefix$assets   | report assets/index.html
+
+  logs | grep -vP $prefix$entries | grep -vP $prefix$feeds | grep -vP $prefix$assets | report abuse/index.html
 }
 
 main $@;
