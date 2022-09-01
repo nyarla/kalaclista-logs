@@ -1,4 +1,5 @@
+.env
+browsers.list*
 dist
 logs
 rt
-.env

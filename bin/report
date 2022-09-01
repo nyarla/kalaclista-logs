@@ -19,7 +19,7 @@ report() {
   local fn=$1
 
   test -d "$(dirname "dist/${fn}")" || mkdir -p "$(dirname "dist/${fn}")"
-  cat - | goaccess -p goaccess.conf -o dist/$fn
+  cat - | goaccess -p goaccess.conf -o dist/$fn --browsers-file=browsers.list
 }
 
 main() {
